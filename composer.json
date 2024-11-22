@@ -1,0 +1,19 @@
+{
+    "name": "slr/aluguel_de_brinquedos_e_equipamentos",
+    "description": "App para controle aluguel de briquedos e equipamentos",
+    "autoload": {
+        "psr-4": {
+            "Src\\": "src/"
+        },
+        "files": ["Router.php", "Config.php"]
+    },
+    "authors": [
+        {
+            "name": "wesleylourenco1",
+            "email": "wesleylourenco1@gmail.com"
+        }
+    ],
+    "require": {
+        "mervick/aes-everywhere": "^1.1"
+    }
+}

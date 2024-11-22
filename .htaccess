@@ -1,0 +1,28 @@
+RewriteEngine On
+
+# Forçar HTTPS e WWW
+RewriteCond %{HTTP_HOST} !^www\. [OR,NC]
+RewriteCond %{HTTPS} off
+
+# Ignorar arquivos e diretórios reais
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Configurar a base da regra
+RewriteBase /
+
+# Redirecionar todas as outras solicitações para index.php
+RewriteRule ^(.*)$ /index.php?url=$1 [L,QSA]
+
+# Bloquear acesso direto a arquivos .php
+<Files *.php>
+    Order Deny,Allow
+    Deny from all
+</Files>
+
+# Permitir acesso direto ao index.php
+<Files index.php>
+    Order Allow,Deny
+    Allow from all
+</Files>
+

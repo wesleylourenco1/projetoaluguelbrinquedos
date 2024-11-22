@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gráfico Dinâmico com Chart.js e jQuery</title>
+  <!-- Bootstrap CSS (opcional, apenas para estilização básica) -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Carregamento do jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Carregamento do Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Seleção de Datas</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="startDate">Data Inicial:</label>
+              <input type="date" class="form-control" id="startDate" name="startDate">
+            </div>
+            <div class="form-group">
+              <label for="endDate">Data Final:</label>
+              <input type="date" class="form-control" id="endDate" name="endDate">
+            </div>
+            <div class="form-group">
+              <label for="endDate">Provisão para:</label>
+              <input type="date" class="form-control" id="provisao" name="provisao">
+            </div>
+            <button type="button" class="btn btn-primary" id="searchData">Pesquisar</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card card-info">
+          <div class="card-header">
+            <h3 class="card-title">Gráfico de Linha</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <canvas id="lineChart"
+                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+    // Função para calcular a diferença em dias entre duas datas
+    function calcularDiferencaEmDias(data1, data2) {
+      // Converte as datas para objetos Date, se não forem
+      var date1 = new Date(data1);
+      var date2 = new Date(data2);
+      
+
+      // Calcula a diferença em milissegundos
+      var diffEmMilissegundos = Math.abs(date2 - date1);
+
+      // Calcula o número de dias dividindo a diferença em milissegundos pelo número de milissegundos em um dia
+      var diffEmDias = Math.ceil(diffEmMilissegundos / (1000 * 60 * 60 * 24));
+
+      return diffEmDias;
+    }
+    function calcularProvisao(valor, dias, provisao){
+      return (valor/dias*provisao);
+    }
+
+      // Função para buscar e atualizar dados do gráfico
+      function updateChart(startDate, endDate) {
+        let provisao = document.getElementById("provisao").value;
+
+
+        fetch('/retornadados', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            startDate: startDate,
+            endDate: endDate
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            var years = Object.keys(data);
+            var values = years.map(year => {
+              let value = data[year];
+              // Converte o valor para número se for uma string numérica
+              return parseFloat(value);
+            });
+            let provisaofututa = calcularProvisao(parseFloat(data.media),
+                calcularDiferencaEmDias(startDate, endDate),
+                calcularDiferencaEmDias(endDate,provisao)) 
+            data.provisao = provisaofututa;
+
+
+            // Atualiza os dados do gráfico
+            var lineChart = document.getElementById('lineChart').getContext('2d');
+            var lineChartData = {
+              labels: years, // Rótulos são os anos
+              datasets: [{
+                label: 'Valores',
+                backgroundColor: 'rgba(60,141,188,0.9)',
+                borderColor: 'rgba(60,141,188,0.8)',
+                borderWidth: 2,
+                data: values, // Valores correspondentes aos anos
+                fill: false
+              },
+              {
+                label: 'Valores',
+                backgroundColor: 'rgba(60,141,188,0.9)',
+                borderColor: 'rgba(60,141,188,0.8)',
+                borderWidth: 2,
+                data: values, // Valores correspondentes aos anos
+                fill: false
+              }
+              ]
+            };
+            var lineChartOptions = {
+              maintainAspectRatio: false,
+              responsive: true,
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  boxWidth: 80,
+                  fontSize: 12,
+                  fontStyle: 'bold'
+                }
+              },
+              scales: {
+                xAxes: [{
+                  gridLines: {
+                    display: false
+                  }
+                }],
+                yAxes: [{
+                  gridLines: {
+                    display: false
+                  }
+                }]
+              }
+            };
+            new Chart(lineChart, {
+              type: 'line',
+              data: lineChartData,
+              options: lineChartOptions
+            });
+          })
+          .catch(error => {
+            console.error('Erro ao buscar dados:', error);
+          });
+      }
+
+      // Evento de clique no botão Pesquisar
+      document.getElementById('searchData').addEventListener('click', function () {
+        var startDate = document.getElementById('startDate').value;
+        var endDate = document.getElementById('endDate').value;
+        updateChart(startDate, endDate);
+      });
+    });
+  </script>
+</body>
+
+</html>
